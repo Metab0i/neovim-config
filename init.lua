@@ -1,10 +1,9 @@
 -- Todo:
---  Make cursor blink in visual mode
 --  Make a diagnostic pop-up when hovering over something for 5 seconds or by invoking a : or something similar..
+--  Warnings and Problems numbers in status 
+--
+--  to open a float vim.diagnostic.open_float()
 
-
--- Colorscheme
-vim.cmd("colorscheme lunaperche")
 
 -- Line numbering
 vim.o.number = true
@@ -14,8 +13,13 @@ vim.o.numberwidth = 1
 -- Cursor configs
 vim.o.cursorline = true
 vim.o.cursorlineopt = "number"
-vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#0246f1", bold = true })
-vim.o.guicursor = "i:ver50,n-v-c:block,r-cr:hor25,o:hor50"
+vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#FFFFFF", bold = true })
+vim.opt.guicursor = {
+  "n-c-v:block",
+  "i-ci-ve:ver25",
+  "r-cr:hor20",
+  "v:block-blinkon500"
+}
 
 -- Spacing
 vim.o.shiftwidth = 2
@@ -37,31 +41,43 @@ vim.api.nvim_set_keymap('t', '<Esc>', [[<C-\><C-n>]], { noremap = true, silent =
 
 
 -- Status Line configs
--- Create an event-ish system that has 2 events
---  1. on attached - shows LSP info 
---  2. default - doesn't show LSP info, only file extension
---    How to do this, look at syntax of how function members of a table are defined in lua
+function setStatusLine ()
+  -- diagnostics info
+  local diagnostics = vim.diagnostic.get(0)
+  local count = { ERR = 0, WARN = 0 }
 
+  for _, d in ipairs(diagnostics) do
+    if d.severity == vim.diagnostic.severity.ERROR then
+      count.ERR = count.ERR + 1
+    elseif d.severity == vim.diagnostic.severity.WARN then
+      count.WARN = count.WARN + 1
+    end
+  end
 
-function setStatusLine (lspc_name)
-  vim.o.statusline = "%m %f %= %y:" .. lspc_name .. " | %p%%"
+  -- lsp info
+  local lsp_client = vim.lsp.get_clients({ bufnr = 0 })[1]
+  local lspc_name = "No LSP"
+
+  if lsp_client ~= nil and lsp_client.name ~= nil then
+    lspc_name = lsp_client.name
+  end
+
+  vim.o.statusline = "%m %F | E:"..count.ERR.." W:"..count.WARN.." %= %y:"..lspc_name.." | %p%%"
 end
 
+setStatusLine()
+
 vim.api.nvim_create_autocmd('LspAttach', {
-  callback = function(ev)
-    local lsp_client = vim.lsp.get_client_by_id(ev.data.client_id)
-    local lspc_name = "No LSP"
-
-    if lsp_client ~= nil and lsp_client.name ~= nil then
-      lspc_name = lsp_client.name
-    end
-
-    setStatusLine(lspc_name)
-
+  callback = function(_ev)
+    setStatusLine()
   end
 })
 
-setStatusLine("No LSP")
+vim.api.nvim_create_autocmd('DiagnosticChanged', {
+  callback = function(_ev)
+    setStatusLine()
+  end
+})
 
 
 -- Diagnostic and errors floats
