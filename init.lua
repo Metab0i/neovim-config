@@ -1,6 +1,6 @@
 -- Todo:
 --  Make cursor blink in visual mode
---  Make a diagnostic pop-up when hovering over something for 5 seconds or invoking a : or something similar..
+--  Make a diagnostic pop-up when hovering over something for 5 seconds or by invoking a : or something similar..
 
 
 -- Colorscheme
@@ -10,16 +10,18 @@ vim.cmd("colorscheme lunaperche")
 vim.o.number = true
 vim.o.relativenumber = true
 vim.o.numberwidth = 1
+
 -- Cursor configs
 vim.o.cursorline = true
 vim.o.cursorlineopt = "number"
 vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#0246f1", bold = true })
 vim.o.guicursor = "i:ver50,n-v-c:block,r-cr:hor25,o:hor50"
 
+-- Spacing
 vim.o.shiftwidth = 2
 vim.o.softtabstop = 2
 
--- Miscelaneous
+-- Fold 
 vim.o.foldmethod = "indent"
 vim.o.foldlevel = 99
 vim.o.foldcolumn = "1"
@@ -30,6 +32,8 @@ vim.opt.fillchars:append {
   foldsep= " "
 }
 
+-- Key-bindings
+vim.api.nvim_set_keymap('t', '<Esc>', [[<C-\><C-n>]], { noremap = true, silent = true })
 
 
 -- Status Line configs
@@ -37,23 +41,27 @@ vim.opt.fillchars:append {
 --  1. on attached - shows LSP info 
 --  2. default - doesn't show LSP info, only file extension
 --    How to do this, look at syntax of how function members of a table are defined in lua
-local lsp_client
-local lspc_name = "No LSP"
+
+
+function setStatusLine (lspc_name)
+  vim.o.statusline = "%m %f %= %y:" .. lspc_name .. " | %p%%"
+end
 
 vim.api.nvim_create_autocmd('LspAttach', {
   callback = function(ev)
-    lsp_client = vim.lsp.get_client_by_id(ev.data.client_id)
+    local lsp_client = vim.lsp.get_client_by_id(ev.data.client_id)
+    local lspc_name = "No LSP"
 
     if lsp_client ~= nil and lsp_client.name ~= nil then
       lspc_name = lsp_client.name
     end
 
-    vim.o.statusline = "%m %f %= %y:" .. lspc_name .. " | %p%%"
+    setStatusLine(lspc_name)
 
   end
 })
 
-
+setStatusLine("No LSP")
 
 
 -- Diagnostic and errors floats
