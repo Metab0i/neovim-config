@@ -1,8 +1,11 @@
 -- Todo:
---  Make a diagnostic pop-up when hovering over something for 5 seconds or by invoking a : or something similar..
---  Warnings and Problems numbers in status 
---
---  to open a float vim.diagnostic.open_float()
+-- Git stuff
+--  https://github.com/lewis6991/gitsigns.nvim?tab=readme-ov-file
+--  Set-up display of total additions, deletions
+--  Set-up a reliable diff view
+--  Means of resolving merges
+-- Debugger stuff
+--  Look into it
 
 
 -- Line numbering
@@ -38,6 +41,7 @@ vim.opt.fillchars:append {
 
 -- Key-bindings
 vim.api.nvim_set_keymap('t', '<Esc>', [[<C-\><C-n>]], { noremap = true, silent = true })
+vim.keymap.set({'n'}, '<C-space>', vim.diagnostic.open_float, { desc = "Open Diagnostics at cursor" })
 
 
 -- Status Line configs
@@ -80,13 +84,6 @@ vim.api.nvim_create_autocmd('DiagnosticChanged', {
 })
 
 
--- Diagnostic and errors floats
--- vim.diagnostic.open_float() whilst hovering over a section
-
-
-
-
-
 
 -- Lazy.nvim
 
@@ -116,7 +113,6 @@ vim.g.maplocalleader = "\\"
 -- Plugins List & Lazy.nvim Set-up
 require("lazy").setup({
   spec = {
-    -- add your plugins here
     {
       "hrsh7th/nvim-cmp",
       event = "InsertEnter",
@@ -125,7 +121,10 @@ require("lazy").setup({
 	"hrsh7th/cmp-buffer",
 	"hrsh7th/vim-vsnip",
 	"hrsh7th/cmp-vsnip",
-	"neovim/nvim-lspconfig"
+	"hrsh7th/cmp-path",
+	"hrsh7th/cmp-cmdline",
+	"neovim/nvim-lspconfig",
+
       }
     },
 
@@ -152,38 +151,30 @@ cmp.setup({
   snippet = {
     -- REQUIRED - you must specify a snippet engine
     expand = function(args)
-      vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
-      -- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
-      -- require('snippy').expand_snippet(args.body) -- For `snippy` users.
-      -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
-      -- vim.snippet.expand(args.body) -- For native neovim snippets (Neovim v0.10+)
-
-      -- For `mini.snippets` users:
-      -- local insert = MiniSnippets.config.expand.insert or MiniSnippets.default_insert
-      -- insert({ body = args.body }) -- Insert at cursor
-      -- cmp.resubscribe({ "TextChangedI", "TextChangedP" })
-      -- require("cmp.config").set_onetime({ sources = {} })
+      vim.fn["vsnip#anonymous"](args.body)
     end,
   },
   window = {
     -- completion = cmp.config.window.bordered(),
     -- documentation = cmp.config.window.bordered(),
   },
+  view = {
+    entries = 'custom',
+  },
   mapping = cmp.mapping.preset.insert({
     ['<C-b>'] = cmp.mapping.scroll_docs(-4),
     ['<C-f>'] = cmp.mapping.scroll_docs(4),
     ['<C-Space>'] = cmp.mapping.complete(),
     ['<C-e>'] = cmp.mapping.abort(),
-    ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
+    ['<CR>'] = cmp.mapping.confirm({ select = true }),
   }),
-  sources = cmp.config.sources({
-    { name = 'nvim_lsp' },
-    { name = 'vsnip' }, -- For vsnip users.
-    -- { name = 'luasnip' }, -- For luasnip users.
-    -- { name = 'ultisnips' }, -- For ultisnips users.
-    -- { name = 'snippy' }, -- For snippy users.
-  }, {
-    { name = 'buffer' },
+  sources = cmp.config.sources(
+  {
+    { name = 'nvim_lsp', priority = 1000 },
+    { name = 'vsnip', priority = 900 },
+  }, 
+  {
+    { name = 'buffer', priority = 750 },
   })
 })
 
@@ -198,12 +189,15 @@ cmp.setup.cmdline({ '/', '?' }, {
 -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
 cmp.setup.cmdline(':', {
   mapping = cmp.mapping.preset.cmdline(),
-  sources = cmp.config.sources({
+
+  sources = cmp.config.sources(
+  {
     { name = 'path' }
-  }, {
+  },
+  {
     { name = 'cmdline' }
   }),
-  matching = { disallow_symbol_nonprefix_matching = false }
+
 })
 
 
