@@ -32,12 +32,12 @@ vim.o.softtabstop = 2
 vim.o.foldmethod = "indent"
 vim.o.foldlevel = 99
 vim.o.foldcolumn = "1"
-vim.opt.fillchars:append {
+vim.opt.fillchars:append({
   foldopen = "▾",
   foldclose = "▸",
   fold = " ",
   foldsep= " "
-}
+})
 
 -- Key-bindings
 vim.api.nvim_set_keymap('t', '<Esc>', [[<C-\><C-n>]], { noremap = true, silent = true })
@@ -66,7 +66,13 @@ function setStatusLine ()
     lspc_name = lsp_client.name
   end
 
-  vim.o.statusline = "%m %F | E:"..count.ERR.." W:"..count.WARN.." %= %y:"..lspc_name.." | %p%%"
+  -- GIT info
+  local git_branch = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.head or "-/-"
+  local git_added = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.added or 0
+  local git_changed = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.changed or 0
+  local git_removed = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.removed or 0
+
+  vim.o.statusline = "%m %f | Err:"..count.ERR.." Warn:"..count.WARN.." | ⎇ :"..git_branch.." +:"..git_added.." ~:"..git_changed.." -:"..git_removed.." %= %y:"..lspc_name.." | %p%%"
 end
 
 setStatusLine()
@@ -127,7 +133,10 @@ require("lazy").setup({
 
       }
     },
-
+    {
+      "lewis6991/gitsigns.nvim",
+      opts = {}
+    },
     {
       "folke/neodev.nvim",
       opts = {}
@@ -141,6 +150,59 @@ require("lazy").setup({
   -- automatically check for plugin updates
   checker = { enabled = true },
 })
+
+
+
+-- gitsigns
+require('gitsigns').setup {
+  signs = {
+    add          = { text = '+' },
+    change       = { text = '~' },
+    delete       = { text = '_' },
+    topdelete    = { text = '‾' },
+    changedelete = { text = '┃' },
+    untracked    = { text = '┆' },
+  },
+  signs_staged = {
+    add          = { text = '+' },
+    change       = { text = '~' },
+    delete       = { text = '_' },
+    topdelete    = { text = '‾' },
+    changedelete = { text = '┃' },
+    untracked    = { text = '┆' },
+  },
+  signs_staged_enable = true,
+  signcolumn = true,  -- Toggle with `:Gitsigns toggle_signs`
+  numhl      = false, -- Toggle with `:Gitsigns toggle_numhl`
+  linehl     = false, -- Toggle with `:Gitsigns toggle_linehl`
+  word_diff  = false, -- Toggle with `:Gitsigns toggle_word_diff`
+  watch_gitdir = {
+    follow_files = true
+  },
+  auto_attach = true,
+  attach_to_untracked = false,
+  current_line_blame = false, -- Toggle with `:Gitsigns toggle_current_line_blame`
+  current_line_blame_opts = {
+    virt_text = true,
+    virt_text_pos = 'eol', -- 'eol' | 'overlay' | 'right_align'
+    delay = 1000,
+    ignore_whitespace = false,
+    virt_text_priority = 100,
+    use_focus = true,
+  },
+  current_line_blame_formatter = '<author>, <author_time:%R> - <summary>',
+  sign_priority = 6,
+  update_debounce = 100,
+  status_formatter = nil, -- Use default
+  max_file_length = 40000, -- Disable if file is longer than this (in lines)
+  preview_config = {
+    -- Options passed to nvim_open_win
+    style = 'minimal',
+    relative = 'cursor',
+    row = 0,
+    col = 1
+  },
+}
 
 
 
@@ -197,7 +259,6 @@ cmp.setup.cmdline(':', {
   {
     { name = 'cmdline' }
   }),
-
 })
 
 
