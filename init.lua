@@ -1,8 +1,6 @@
 -- Todo:
 -- Git stuff
 --  https://github.com/lewis6991/gitsigns.nvim?tab=readme-ov-file
---  Set-up display of total additions, deletions
---  Set-up a reliable diff view
 --  Means of resolving merges
 -- Debugger stuff
 --  Look into it
@@ -44,7 +42,11 @@ vim.api.nvim_set_keymap('t', '<Esc>', [[<C-\><C-n>]], { noremap = true, silent =
 vim.keymap.set({'n'}, '<C-space>', vim.diagnostic.open_float, { desc = "Open Diagnostics at cursor" })
 
 
--- Status Line configs
+
+
+-- Winbar and Status Line configs
+vim.o.winbar = "%m %f"
+
 function setStatusLine ()
   -- diagnostics info
   local diagnostics = vim.diagnostic.get(0)
@@ -72,8 +74,9 @@ function setStatusLine ()
   local git_changed = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.changed or 0
   local git_removed = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.removed or 0
 
-  vim.o.statusline = "%m %f | Err:"..count.ERR.." Warn:"..count.WARN.." | ⎇ :"..git_branch.." +:"..git_added.." ~:"..git_changed.." -:"..git_removed.." %= %y:"..lspc_name.." | %p%%"
+  vim.o.statusline = "⎇ :"..git_branch.." +:"..git_added.." ~:"..git_changed.." -:"..git_removed.." | Err:"..count.ERR.." Warn:"..count.WARN.."  %= %y:"..lspc_name.." | %p%%"
 end
+
 
 setStatusLine()
 
@@ -88,6 +91,7 @@ vim.api.nvim_create_autocmd('DiagnosticChanged', {
     setStatusLine()
   end
 })
+
 
 
 
@@ -141,6 +145,19 @@ require("lazy").setup({
       "folke/neodev.nvim",
       opts = {}
     },
+    {
+    'nvim-telescope/telescope.nvim',
+     branch = "0.1.x",
+     dependencies = { 
+       'nvim-lua/plenary.nvim'
+     }
+    },
+    {
+      "nvim-treesitter/nvim-treesitter",
+      branch = 'master',
+      lazy = false,
+      build = ":TSUpdate"
+    }
   },
 
   -- Other settings here
@@ -153,7 +170,9 @@ require("lazy").setup({
 
 
 
--- gitsigns
+
+-- git and gitsigns
+vim.opt.fillchars:append({ diff = '░'})
 require('gitsigns').setup {
   signs = {
     add          = { text = '+' },
@@ -203,6 +222,7 @@ require('gitsigns').setup {
     col = 1
   },
 }
+
 
 
 
@@ -263,6 +283,7 @@ cmp.setup.cmdline(':', {
 
 
 
+
 -- LSP server Set-up
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#lsp-configs
 vim.lsp.enable('clangd')
@@ -293,3 +314,11 @@ lspconfig.ts_ls.setup({
 lspconfig.lua_ls.setup({
   capabilities = capabilities,
 })
+
+
+
+
+-- Telescope Set-up
+local telesccope = require('telescope.builtin')
+vim.keymap.set('n', '<C-p>p', telesccope.live_grep, {desc = "Telescope Live Grep"});
+vim.keymap.set('n', '<C-p>f', telesccope.find_files, {desc = "Telescope Find Files"});
