@@ -1,10 +1,3 @@
--- Todo:
--- Git stuff
---  https://github.com/lewis6991/gitsigns.nvim?tab=readme-ov-file
---  Means of resolving merges
--- Debugger stuff
---  Look into it
-
 
 -- Line numbering
 vim.o.number = true
@@ -157,10 +150,9 @@ require("lazy").setup({
       branch = 'master',
       lazy = false,
       build = ":TSUpdate"
-    }
+    },
   },
 
-  -- Other settings here
 
   -- colorscheme that will be used when installing plugins.
   install = { colorscheme = { "habamax" } },
