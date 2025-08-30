@@ -19,16 +19,6 @@ vim.opt.guicursor = {
 vim.o.shiftwidth = 2
 vim.o.softtabstop = 2
 
--- Fold 
-vim.o.foldmethod = "indent"
-vim.o.foldlevel = 99
-vim.o.foldcolumn = "1"
-vim.opt.fillchars:append({
-  foldopen = "▾",
-  foldclose = "▸",
-  fold = " ",
-  foldsep= " "
-})
 
 -- Key-bindings
 vim.api.nvim_set_keymap('t', '<Esc>', [[<C-\><C-n>]], { noremap = true, silent = true })
@@ -151,6 +141,13 @@ require("lazy").setup({
       lazy = false,
       build = ":TSUpdate"
     },
+    {
+	"lukas-reineke/indent-blankline.nvim",
+	main = "ibl",
+	---@module "ibl"
+	---@type ibl.config
+	opts = {},
+    }
   },
 
 
@@ -289,9 +286,6 @@ local lspconfig = require('lspconfig')
 
 lspconfig.clangd.setup({
   cmd = {'clangd', '--background-index', '--clang-tidy', '--log=verbose'},
-  init_options = {
-    fallbackFlags = { '-std=c++17' },
-  },
   capabilities = capabilities,
 })
 
@@ -314,3 +308,13 @@ lspconfig.lua_ls.setup({
 local telesccope = require('telescope.builtin')
 vim.keymap.set('n', '<C-p>p', telesccope.live_grep, {desc = "Telescope Live Grep"});
 vim.keymap.set('n', '<C-p>f', telesccope.find_files, {desc = "Telescope Find Files"});
+
+
+
+
+-- indent-blankline
+require("ibl").setup({
+  indent = {
+    char = "┊",
+  }
+})
