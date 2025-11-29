@@ -212,6 +212,7 @@ require("lazy").setup({
 
 
 -- git and gitsigns
+--  :Gitsigns diffthis
 vim.opt.fillchars:append({ diff = '░'})
 require('gitsigns').setup {
   signs = {
@@ -372,7 +373,12 @@ cmp.setup.cmdline(':', {
 
 
 
-print()
+
+
+
+
+
+
 
 
 
