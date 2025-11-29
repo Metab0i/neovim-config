@@ -1,3 +1,15 @@
+--TODO:
+--  Better and more reliable way of text-prediction
+--    consider getting rid of just plain text buffer, no use really
+--    find a way to summon a field/object documnetation on cursor hover and <C-Space> 
+--    
+--  Autocompletion
+--    tab should cause cycling through suggestions
+--    close scope indicators for me
+--    functions, if statements, loops 
+--    auto-indentation should be 1 tab
+
+
 
 -- Line numbering
 vim.o.number = true
@@ -20,19 +32,37 @@ vim.o.shiftwidth = 2
 vim.o.softtabstop = 2
 
 
+-- Indentation
+vim.wo.wrap = true
+vim.wo.breakindent = true
+vim.opt.showbreak = "↪  "
+
+
+-- Other
 vim.o.clipboard = "unnamed"
 
 
 -- Key-bindings
 vim.api.nvim_set_keymap('t', '<Esc>', [[<C-\><C-n>]], { noremap = true, silent = true })
 vim.keymap.set({'n'}, '<C-space>', vim.diagnostic.open_float, { desc = "Open Diagnostics at cursor" })
+vim.keymap.set({'n'}, '<S-Tab>', vim.lsp.buf.hover, { desc = "Open Docs at cursor" })
+
+
+
+
+
+
+
+
 
 
 
 
 -- Winbar and Status Line configs
-vim.o.winbar = "%m %f"
+vim.o.winbar = vim.bo.filetype == "minimap" and "%m %f" or ""
 
+--- Constructs and returns a statusline config
+--- @return string
 function setStatusLine ()
   -- diagnostics info
   local diagnostics = vim.diagnostic.get(0)
@@ -60,23 +90,32 @@ function setStatusLine ()
   local git_changed = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.changed or 0
   local git_removed = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.removed or 0
 
-  vim.o.statusline = "⎇ :"..git_branch.." +:"..git_added.." ~:"..git_changed.." -:"..git_removed.." | Err:"..count.ERR.." Warn:"..count.WARN.."  %= %y:"..lspc_name.." | %p%%"
+  return "⎇ :"..git_branch.." +:"..git_added.." ~:"..git_changed.." -:"..git_removed.." | Err:"..count.ERR.." Warn:"..count.WARN.."  %= %y:"..lspc_name.." | %p%%"
 end
 
+print()
 
-setStatusLine()
-
-vim.api.nvim_create_autocmd('LspAttach', {
+vim.api.nvim_create_autocmd({'LspAttach', 'DiagnosticChanged', 'WinEnter', 'BufEnter'}, {
   callback = function(_ev)
-    setStatusLine()
+    vim.o.statusline = " ";
+
+    local win = vim.api.nvim_get_current_win()
+
+    -- to make sure that statusline doesn't render for overview minimap
+    if vim.bo.filetype == "minimap" then
+	vim.wo.statusline = ""
+    else
+	vim.wo.statusline = setStatusLine()
+    end
   end
 })
 
-vim.api.nvim_create_autocmd('DiagnosticChanged', {
-  callback = function(_ev)
-    setStatusLine()
-  end
-})
+
+
+
+
+
+
 
 
 
@@ -120,15 +159,10 @@ require("lazy").setup({
 	"hrsh7th/cmp-path",
 	"hrsh7th/cmp-cmdline",
 	"neovim/nvim-lspconfig",
-
       }
     },
     {
       "lewis6991/gitsigns.nvim",
-      opts = {}
-    },
-    {
-      "folke/neodev.nvim",
       opts = {}
     },
     {
@@ -145,11 +179,19 @@ require("lazy").setup({
       build = ":TSUpdate"
     },
     {
-	"lukas-reineke/indent-blankline.nvim",
-	main = "ibl",
-	---@module "ibl"
-	---@type ibl.config
-	opts = {},
+      "lukas-reineke/indent-blankline.nvim",
+      main = "ibl",
+      ---@module "ibl"
+      ---@type ibl.config
+      opts = {},
+    },
+    {
+      "wfxr/minimap.vim",
+      init = function ()
+	vim.g.minimap_auto_start = 1
+	vim.g.minimap_git_colors = 1
+	vim.g.minimap_width = 11
+      end,
     }
   },
 
@@ -159,6 +201,12 @@ require("lazy").setup({
   -- automatically check for plugin updates
   checker = { enabled = true },
 })
+
+
+
+
+
+
 
 
 
@@ -218,6 +266,13 @@ require('gitsigns').setup {
 
 
 
+
+
+
+
+
+
+
 -- nvim-cmp
 local cmp = require'cmp'
 
@@ -228,27 +283,67 @@ cmp.setup({
       vim.fn["vsnip#anonymous"](args.body)
     end,
   },
+
   window = {
     -- completion = cmp.config.window.bordered(),
     -- documentation = cmp.config.window.bordered(),
   },
+
   view = {
     entries = 'custom',
   },
-  mapping = cmp.mapping.preset.insert({
-    ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-    ['<C-f>'] = cmp.mapping.scroll_docs(4),
-    ['<C-Space>'] = cmp.mapping.complete(),
-    ['<C-e>'] = cmp.mapping.abort(),
-    ['<CR>'] = cmp.mapping.confirm({ select = true }),
-  }),
+
+
+  mapping = {
+    ['<C-b>'] = cmp.mapping(function(fallback)
+      cmp.scroll_docs(-4)
+    end, { "i" }),
+
+    ['<C-f>'] = cmp.mapping(function(fallback)
+      cmp.scroll_docs(4)
+    end, { "i" }),
+
+    ['<C-Space>'] = cmp.mapping(function(fallback)
+      cmp.complete()
+    end, { "i" }),
+
+    ['<C-e>'] = cmp.mapping(function(fallback)
+      cmp.abort()
+    end, { "i" }),
+
+    ['<CR>'] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+	cmp.confirm({ select = true })
+      else
+	fallback()
+      end
+    end, { "i", "s" }),
+
+    ['<Tab>'] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+	cmp.select_next_item()
+      else
+	fallback()
+      end
+    end, { "i" }),
+
+    ['<S-Tab>'] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+	cmp.select_prev_item()
+      else
+	fallback()
+      end
+    end, {"i"}),
+  },
+
   sources = cmp.config.sources(
   {
     { name = 'nvim_lsp', priority = 1000 },
     { name = 'vsnip', priority = 900 },
   },
+
   {
-    { name = 'buffer', priority = 750 },
+    { name = 'buffer', priority = 50 },
   })
 })
 
@@ -276,12 +371,18 @@ cmp.setup.cmdline(':', {
 
 
 
+
+print()
+
+
+
 -- LSP server Set-up
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#lsp-configs
 
 vim.lsp.enable('clangd') -- sudo apt-get install clangd
 vim.lsp.enable('lua_ls') -- https://github.com/LuaLS/lua-language-server/releases 
 vim.lsp.enable('ts_ls')  -- https://github.com/typescript-language-server/typescript-language-server
+vim.lsp.enable('bashls') -- https://github.com/bash-lsp/bash-language-server
 
 local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
@@ -298,6 +399,15 @@ vim.lsp.config['lua_ls'] = {
   capabilities = capabilities,
 }
 
+vim.lsp.config['bashls'] = {
+  capabilities = capabilities,
+}
+
+
+
+
+
+
 
 
 
@@ -305,6 +415,14 @@ vim.lsp.config['lua_ls'] = {
 local telesccope = require('telescope.builtin')
 vim.keymap.set('n', '<C-p>p', telesccope.live_grep, {desc = "Telescope Live Grep"});
 vim.keymap.set('n', '<C-p>f', telesccope.find_files, {desc = "Telescope Find Files"});
+
+
+
+
+
+
+
+
 
 
 
