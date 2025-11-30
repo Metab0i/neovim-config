@@ -10,7 +10,6 @@
 --    auto-indentation should be 1 tab
 
 
-
 -- Line numbering
 vim.o.number = true
 vim.o.relativenumber = true
@@ -45,10 +44,9 @@ vim.o.clipboard = "unnamed"
 -- Key-bindings
 vim.api.nvim_set_keymap('t', '<Esc>', [[<C-\><C-n>]], { noremap = true, silent = true })
 vim.keymap.set({'n'}, '<C-space>', vim.diagnostic.open_float, { desc = "Open Diagnostics at cursor" })
-vim.keymap.set({'n'}, '<S-Tab>', vim.lsp.buf.hover, { desc = "Open Docs at cursor" })
-
-
-
+vim.keymap.set({'n'}, '<S-Tab>', vim.lsp.buf.hover,	      { desc = "Open Docs at cursor" })
+vim.keymap.set({'i'}, '<C-z>', '<C-o>u',		      { desc = "Undo functionality in insert mode" })
+vim.keymap.set({'i'}, '<C-r>', '<C-o><C-r>',		      { desc = "Redo functionality in insert mode" })
 
 
 
@@ -59,7 +57,12 @@ vim.keymap.set({'n'}, '<S-Tab>', vim.lsp.buf.hover, { desc = "Open Docs at curso
 
 
 -- Winbar and Status Line configs
-vim.o.winbar = vim.bo.filetype == "minimap" and "%m %f" or ""
+if not (vim.bo.filetype == "minimap") then
+  vim.wo.winbar = "%m %F"
+else
+  vim.wo.winbar = ""
+end
+
 
 --- Constructs and returns a statusline config
 --- @return string
@@ -93,19 +96,17 @@ function setStatusLine ()
   return "⎇ :"..git_branch.." +:"..git_added.." ~:"..git_changed.." -:"..git_removed.." | Err:"..count.ERR.." Warn:"..count.WARN.."  %= %y:"..lspc_name.." | %p%%"
 end
 
-print()
+vim.o.laststatus = 3;
 
 vim.api.nvim_create_autocmd({'LspAttach', 'DiagnosticChanged', 'WinEnter', 'BufEnter'}, {
   callback = function(_ev)
     vim.o.statusline = " ";
 
-    local win = vim.api.nvim_get_current_win()
-
     -- to make sure that statusline doesn't render for overview minimap
     if vim.bo.filetype == "minimap" then
-	vim.wo.statusline = ""
+	vim.wo.statusline = "";
     else
-	vim.wo.statusline = setStatusLine()
+	vim.wo.statusline = setStatusLine();
     end
   end
 })
@@ -402,6 +403,21 @@ vim.lsp.config['ts_ls'] = {
 }
 
 vim.lsp.config['lua_ls'] = {
+  settings = {
+    Lua = {
+      completion = {
+        callSnippet = "Replace",
+      },
+      diagnostics = {
+        globals = { "vim" },
+      },
+      workspace = {
+        library = vim.api.nvim_get_runtime_file("", true),
+        checkThirdParty = false,
+      },
+      telemetry = { enable = false },
+    },
+  },
   capabilities = capabilities,
 }
 

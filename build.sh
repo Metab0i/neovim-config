@@ -40,9 +40,9 @@ notIwannaI() {
   fi
 }
 
-ec
 
-echo "\n\nChecking package dependencies..\n\n"
+
+echo -e "\n\nChecking package dependencies..\n\n"
 
 
 
@@ -97,16 +97,53 @@ fi
 
 
 #todo
-echo "\n\nSetting up lsp dependencies..\n\n"
+echo -e "\n\nSetting up lsp dependencies..\n\n"
 
 
 
 # ts_ls
 
-if npm list -g --depth=0 typescript > /dev/null 2> &1; then
-  echo "npm Installed"
+if npm list -g --depth=0 typescript &>/dev/null; then
+  echo "Typescript already installed.."
+
 else
-  echo "npm Not installed :("
+  if dpkg -s npm &> /dev/null/; then
+    if sudo npm i -g typescript 2> ./err.log ; then
+      echo "Typescript installation attempt complete.."
+
+    else
+      echo "Typescript installation went wrong, check ./err.log"
+
+    fi
+
+  else
+    echo "npm isn't installed, cannot handle this dependency.."
+
+    if notIwannaI "npm" ; then
+      sudo apt-get install npm && sudo npm i -g typescript
+      echo "Typescript and npm installation attempt complete.."
+
+    else
+      echo "Typescript dependency cannot be installed, skipped.."
+    fi
+    
+  fi  
+fi
+
+
+if npm list -g --depth=0 typescript-language-server >/dev/null 1>&1; then
+  echo "typescript-language-server already installed.."  
+
+else
+  if dpkg -s npm &> /dev/null; then
+    if notIwannaI "npm" &>/dev/null/ ; then
+    else
+    fi
+
+  else
+    echo "typescript-language-server dependency cannot be installed, skipped.."
+
+  fi
 fi
 
 
@@ -130,8 +167,8 @@ fi
 
 # lua-language-server
 
-if lua-language-server --version &> /dev/null; then
-  echo "lua lang server isn't installed"
-else
+if lua-language-server --version &>/dev/null; then
   echo "lua lang server is installed"
+else
+  echo "lua lang server isn't installed"
 fi
