@@ -1,11 +1,9 @@
 --TODO:
 --  Better and more reliable way of text-prediction
 --    consider getting rid of just plain text buffer, no use really
---    find a way to summon a field/object documnetation on cursor hover and <C-Space> 
---    
+--
 --  Autocompletion
---    tab should cause cycling through suggestions
---    close scope indicators for me
+--    automatically close scopes
 --    functions, if statements, loops 
 --    auto-indentation should be 1 tab
 
