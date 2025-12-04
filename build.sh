@@ -22,13 +22,14 @@
 # This script installs says dependencies 
 #
 
-#ensure apt-get is up-to-date
-#sudo apt-get upgrade && sudo apt-get update
+
+# Ensure apt-get is up-to-date
+sudo apt-get upgrade && sudo apt-get update
 
 
 # Not Installed, Wanna Install?
 notIwannaI() {
-  echo "current arg is: $1"
+  echo -e "\n\n"
 
   read -pr "$1 not installed. Wanna install? [Y/n]" install_dep
   install_dep=${install_dep:-Y}
@@ -40,6 +41,23 @@ notIwannaI() {
   fi
 }
 
+
+# is neovim installed?
+if nvim --version &>/dev/null/; then
+  if notIwannaI "neovim" ; then
+    echo "Installing Neovim..\n"
+    # might need to install from source, apt package is old as hell 
+    
+  else
+    echo "Skipped installing Neovim. With no Neovim, this config is useless. Terminating process..\n"
+    exit 0
+
+  fi
+
+else
+  echo -e "\n\n\nNeovim already installed..\n\n"
+
+fi
 
 
 echo -e "\n\nChecking package dependencies..\n\n"
@@ -53,12 +71,16 @@ for apt_dep in "${apt_deps[@]}"; do
   if ! dpkg -s "$apt_dep" &> /dev/null; then
     if notIwannaI "$apt_dep" ; then
       #main installation process
-      sudo apt-get update && sudo apt-get install "$apt_dep" 
+      sudo apt-get install "$apt_dep" 
+
     else
       echo "Skiped installing $apt_dep.."
+
     fi
+
   else
     echo "$apt_dep already installed.."
+
   fi
 done
 
